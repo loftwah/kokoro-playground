@@ -51,11 +51,6 @@ cd Kokoro-82M
 # Verify you got everything (if any of these are missing, the clone didn't work properly)
 ls Kokoro-82M/kokoro-v0_19.pth    # Should see the main model file
 ls Kokoro-82M/voices              # Should see the voice files
-ls Kokoro-82M/models.py           # Should see the model code
-ls Kokoro-82M/kokoro.py           # Should see the generation code
-
-# Make sure Python can find the model code
-export PYTHONPATH="$PYTHONPATH:$PWD/Kokoro-82M"
 ```
 
 ## 🎭 Understanding the Voices
