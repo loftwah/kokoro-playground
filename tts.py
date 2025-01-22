@@ -3,6 +3,7 @@ import torch
 import warnings
 import scipy.io.wavfile as wavfile
 from pathlib import Path
+import argparse
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -25,14 +26,12 @@ def load_model(device):
     for model_path in model_paths:
         print(f"\nTrying to load model: {model_path}")
         try:
-            # Try loading without weights_only first
             model = build_model(str(model_path), device)
             print(f"Successfully loaded model from {model_path}")
             return model
         except Exception as e:
             print(f"Failed to load model from {model_path}: {str(e)}")
             try:
-                # Try alternate loading method
                 state_dict = torch.load(str(model_path), map_location=device)
                 if isinstance(state_dict, dict) and 'net' in state_dict:
                     model = build_model(state_dict['net'], device)
@@ -44,47 +43,69 @@ def load_model(device):
     raise Exception("Failed to load model using any available method")
 
 def main():
+    parser = argparse.ArgumentParser(description='Kokoro TTS Generator')
+    parser.add_argument('--text', help='Text to synthesize')
+    parser.add_argument('--voice', default='af', help='Voice to use (default: af)')
+    parser.add_argument('--output', help='Output file path (optional)')
+    parser.add_argument('--list', action='store_true', help='List available voices')
+    args = parser.parse_args()
+    
     try:
+        if args.list:
+            print("\nAvailable voices:")
+            print("af - Default (Bella & Sarah mix)")
+            print("af_bella - Bella (American)")
+            print("af_sarah - Sarah (American)")
+            print("af_nicole - Nicole (American)")
+            print("af_sky - Sky (American)")
+            print("am_adam - Adam (American)")
+            print("am_michael - Michael (American)")
+            print("bf_emma - Emma (British)")
+            print("bf_isabella - Isabella (British)")
+            print("bm_george - George (British)")
+            print("bm_lewis - Lewis (British)")
+            return
+
         # Set device
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print(f"Using device: {device}")
         
-        # Load model using our new function
+        # Load model
         model = load_model(device)
         
         # Load voice
-        voice_name = 'af'  # Default voice (Bella & Sarah mix)
-        voice_path = kokoro_path / "voices" / f"{voice_name}.pt"
+        voice_path = kokoro_path / "voices" / f"{args.voice}.pt"
         voicepack = torch.load(voice_path, weights_only=True).to(device)
-        print(f'Loaded voice: {voice_name}')
+        print(f'Loaded voice: {args.voice}')
         
         # Get text input
-        text = input("Enter text to synthesize (or press Enter for default): ").strip()
-        if not text:
-            text = "Hey there! I'm Loftwah, a Senior DevOps Engineer. I automate all the things, turn coffee into code, and occasionally flip tables when the production pipeline breaks. But don't worry, I always catch them before they hit the ground! (╯°□°)╯︵ ┻━┻  ┬─┬ノ(°□°ノ)"
+        text = args.text if args.text else input("Enter text to synthesize: ").strip()
         
         # Generate audio
         print("\nGenerating audio...")
-        audio, phonemes = generate(model, text, voicepack, lang=voice_name[0])
-        
-        # Create output directory if it doesn't exist
-        output_dir = Path("output")
-        output_dir.mkdir(exist_ok=True)
+        audio, phonemes = generate(model, text, voicepack, lang=args.voice[0])
         
         # Save audio
-        output_file = output_dir / "output.wav"
+        if args.output:
+            output_file = Path(args.output)
+        else:
+            output_dir = Path("output")
+            output_dir.mkdir(exist_ok=True)
+            output_file = output_dir / f"output_{args.voice}.wav"
         wavfile.write(str(output_file), 24000, audio)
         print(f"\nAudio saved to: {output_file}")
-        print("\nPhonemes used:")
-        print(phonemes)
 
     except Exception as e:
         print(f"\nError: {str(e)}")
-        print("\nTroubleshooting tips:")
-        print("1. Make sure all model files are properly downloaded")
-        print("2. Check if CUDA is properly installed (if using GPU)")
-        print("3. Try using CPU instead of GPU by modifying the script")
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 1:
+        print("\nUsage:")
+        print("List voices:  python tts.py --list")
+        print("Basic usage: python tts.py --text 'Hello world'")
+        print("Change voice: python tts.py --voice af_bella --text 'Hello world'")
+        print("Custom output: python tts.py --text 'Hello' --output custom.wav")
+        print("\nRun 'python tts.py --list' to see all available voices")
+    else:
+        main()
