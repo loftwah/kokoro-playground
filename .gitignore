@@ -171,5 +171,4 @@ cython_debug/
 .pypirc
 
 Kokoro-82M/
-kokoro-playground/
 output/
