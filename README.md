@@ -51,6 +51,11 @@ cd Kokoro-82M
 # Verify you got everything (if any of these are missing, the clone didn't work properly)
 ls Kokoro-82M/kokoro-v0_19.pth    # Should see the main model file
 ls Kokoro-82M/voices              # Should see the voice files
+ls Kokoro-82M/models.py           # Should see the model code
+ls Kokoro-82M/kokoro.py           # Should see the generation code
+
+# Make sure Python can find the model code
+export PYTHONPATH="$PYTHONPATH:$PWD/Kokoro-82M"
 ```
 
 ## 🎭 Understanding the Voices
@@ -85,14 +90,23 @@ This is the easiest way to get started. Open your terminal and try these command
 python tts.py --list
 
 # Let's make your first text-to-speech! This uses the default voice:
-python tts.py --text "Hello! This is my first time using Kokoro!"
+# Note: Use single quotes for text with exclamation marks
+python tts.py --text 'Hello! This is my first time using Kokoro!'
 
 # Try different voices (notice how we specify the voice we want):
-python tts.py --voice af_bella --text "Hi, I'm Bella! I have an American accent!"
-python tts.py --voice bm_george --text "Hello chaps! I'm George, with a British accent!"
+python tts.py --voice af_bella --text 'Hi! I am Bella with an American accent!'
+python tts.py --voice bm_george --text 'Hello chaps! I am George, with a British accent!'
 
 # Save the audio with a specific name (it'll go in the 'output' folder):
-python tts.py --voice af_sky --text "Hi, I'm Sky!" --output my_first_audio.wav
+python tts.py --voice af_sky --text 'Hi! I am Sky!' --output my_first_audio.wav
+
+# If you need to use double quotes, you can escape exclamation marks:
+python tts.py --text "Hello\! This works too\!"
+
+# Or temporarily disable history expansion:
+set +H  # Turn off history expansion
+python tts.py --text "Hello! Now exclamation marks work fine!"
+set -H  # Turn history expansion back on if you want
 ```
 
 ### The More Flexible Way (Using Python)
