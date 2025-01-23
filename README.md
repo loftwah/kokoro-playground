@@ -20,7 +20,7 @@ source venv/bin/activate
 
 # Install all the programs we need
 # Don't worry if you see a lot of text - that's normal!
-pip install phonemizer torch transformers scipy munch
+pip install phonemizer torch transformers scipy munch pydub
 
 # Install espeak-ng - this helps convert text to speech sounds
 # On Ubuntu/Debian Linux:

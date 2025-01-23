@@ -5,6 +5,8 @@ import scipy.io.wavfile as wavfile
 from pathlib import Path
 import argparse
 import numpy as np
+from pydub import AudioSegment
+import io
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -194,9 +196,16 @@ def main():
         if args.output:
             output_file = output_dir / args.output
         else:
-            output_file = output_dir / f"output_{args.voice}.wav"
+            output_file = output_dir / f"output_{args.voice}.mp3"
             
-        wavfile.write(str(output_file), 24000, audio)
+        # First save as WAV in memory
+        wav_buffer = io.BytesIO()
+        wavfile.write(wav_buffer, 24000, audio)
+        wav_buffer.seek(0)
+        
+        # Convert to MP3
+        audio_segment = AudioSegment.from_wav(wav_buffer)
+        audio_segment.export(str(output_file), format='mp3', bitrate='192k')
         print(f"\nAudio saved to: {output_file}")
 
     except Exception as e:
