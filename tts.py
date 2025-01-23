@@ -139,6 +139,8 @@ def main():
     parser.add_argument('--text', help='Text to synthesize')
     parser.add_argument('--voice', default='af', help='Voice to use (default: af)')
     parser.add_argument('--output', help='Output filename (will be saved in output directory)')
+    parser.add_argument('--format', default='mp3', choices=['mp3', 'wav', 'ogg', 'aac', 'opus'],
+                      help='Output audio format (default: mp3)')
     parser.add_argument('--list', action='store_true', help='List available voices')
     args = parser.parse_args()
     
@@ -192,21 +194,52 @@ def main():
         output_dir = Path("output")
         output_dir.mkdir(exist_ok=True)
         
-        # Always use output directory
+        # Determine output filename and format
         if args.output:
             output_file = output_dir / args.output
+            # If no extension in provided filename, add the format
+            if not output_file.suffix:
+                output_file = output_file.with_suffix(f'.{args.format}')
         else:
-            output_file = output_dir / f"output_{args.voice}.mp3"
+            output_file = output_dir / f"output_{args.voice}.{args.format}"
             
         # First save as WAV in memory
         wav_buffer = io.BytesIO()
         wavfile.write(wav_buffer, 24000, audio)
         wav_buffer.seek(0)
         
-        # Convert to MP3
+        # Convert to desired format
         audio_segment = AudioSegment.from_wav(wav_buffer)
-        audio_segment.export(str(output_file), format='mp3', bitrate='192k')
-        print(f"\nAudio saved to: {output_file}")
+        
+        # Format-specific export settings
+        format_settings = {
+            'mp3': {'format': 'mp3', 'bitrate': '192k'},
+            'wav': {'format': 'wav'},
+            'ogg': {'format': 'ogg', 'codec': 'libvorbis', 'bitrate': '192k'},
+            'aac': {'format': 'm4a', 'codec': 'aac', 'bitrate': '192k'},
+            'opus': {'format': 'opus', 'codec': 'libopus', 'bitrate': '160k'}
+        }
+        
+        # Get export settings for chosen format
+        export_settings = format_settings[args.format]
+        
+        try:
+            # For OGG format
+            if args.format == 'ogg':
+                audio_segment.export(str(output_file), format='ogg', parameters=['-acodec', 'libvorbis'])
+            # For AAC format
+            elif args.format == 'aac':
+                audio_segment.export(str(output_file), format='adts', parameters=['-acodec', 'aac'])
+            # For other formats
+            else:
+                audio_segment.export(str(output_file), **export_settings)
+            print(f"\nAudio saved to: {output_file}")
+        except Exception as e:
+            # Fallback to MP3 if the chosen format fails
+            print(f"\nWarning: Failed to save in {args.format} format ({str(e)}). Falling back to MP3...")
+            fallback_file = output_file.with_suffix('.mp3')
+            audio_segment.export(str(fallback_file), format='mp3', bitrate='192k')
+            print(f"Audio saved to: {fallback_file}")
 
     except Exception as e:
         print(f"\nError: {str(e)}")
@@ -218,8 +251,10 @@ if __name__ == "__main__":
         print("List voices:  python tts.py --list")
         print("Basic usage: python tts.py --text 'Hello world'")
         print("Change voice: python tts.py --voice af_bella --text 'Hello world'")
+        print("Custom format: python tts.py --text 'Hello' --format ogg")
         print("Custom output: python tts.py --text 'Hello' --output custom.wav")
-        print("\nAll files are saved in the 'output' directory")
+        print("\nSupported formats: mp3, wav, ogg, aac, opus")
+        print("All files are saved in the 'output' directory")
         print("Run 'python tts.py --list' to see all available voices")
     else:
         main()

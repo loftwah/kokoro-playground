@@ -92,11 +92,14 @@ python tts.py --text 'Hello! This is my first time using Kokoro!'
 python tts.py --voice af_bella --text 'Hi! I am Bella with an American accent!'
 python tts.py --voice bm_george --text 'Hello chaps! I am George, with a British accent!'
 
-# Try a long text
-python tts.py --text "In a quaint little town nestled among rolling hills, there lived a peculiar inventor named Dr. Fitzgerald. His workshop was a marvel of organized chaos, filled with whirring contraptions and bubbling beakers. Every morning, he would wake up at precisely 6:43 AM to begin his daily experiments. The townspeople had grown accustomed to the occasional puff of colorful smoke rising from his chimney, or the strange musical notes that sometimes echoed through the valley. One particularly memorable Tuesday, Dr. Fitzgerald announced he had created something extraordinary - a machine that could translate cat meows into human speech! The local cats, however, seemed suspiciously unimpressed. Mrs. Whiskers, the old tabby from the bakery, simply yawned and went back to sleep. Perhaps some mysteries, Dr. Fitzgerald realized, were better left unsolved. But then, as he was about to give up, he noticed something - the cat's ears perked up, and Mrs. Whiskers' tail began to wag. With a mischievous grin, she meowed, 'Meow!' And Dr. Fitzgerald, realizing he had just cracked the code, laughed out loud. The townspeople, hearing the laughter, came running to see what was so funny. And as they gathered around, they too began to laugh, the sound echoing through the valley. For in that moment, Dr. Fitzgerald had not only solved the mystery of cat speech, but he had also discovered the secret to happiness - that sometimes, the most extraordinary things are right under our noses, if only we have the courage to look."
+# Try different audio formats
+python tts.py --text 'Hello!' --format wav  # Uncompressed audio
+python tts.py --text 'Hello!' --format ogg  # OGG Vorbis format
+python tts.py --text 'Hello!' --format aac  # AAC format
+python tts.py --text 'Hello!' --format opus # Opus format (high quality, small size)
 
-# Save the audio with a specific name (it'll go in the 'output' folder):
-python tts.py --voice af_sky --text 'Hi! I am Sky!' --output my_first_audio.wav
+# Save the audio with a specific name and format
+python tts.py --voice af_sky --text 'Hi! I am Sky!' --output my_audio.opus
 
 # If you need to use double quotes, you can escape exclamation marks:
 python tts.py --text "Hello\! This works too\!"
@@ -315,7 +318,23 @@ brew install espeak
 # Download and install from: https://github.com/espeak-ng/espeak-ng/releases
 ```
 
-### Problem 2: CUDA (GPU) errors
+### Problem 2: Audio format conversion errors
+
+If you're having issues with certain audio formats (OGG, AAC, Opus), you need to install the required codecs:
+
+```bash
+# On Ubuntu/Debian Linux:
+sudo apt-get update
+sudo apt-get install ffmpeg libavcodec-extra
+
+# On Mac:
+brew install ffmpeg
+
+# On Windows:
+# Download and install ffmpeg from: https://www.ffmpeg.org/download.html
+```
+
+### Problem 3: CUDA (GPU) errors
 
 If you have a graphics card but see errors:
 
