@@ -64,8 +64,32 @@ def load_model(device):
     
     raise Exception("Failed to load model using any available method")
 
+def crossfade(a, b, overlap_samples=2000):
+    """Crossfade two audio segments"""
+    if isinstance(a, np.ndarray):
+        a = torch.from_numpy(a)
+    if isinstance(b, np.ndarray):
+        b = torch.from_numpy(b)
+    
+    # Create fade curves
+    fade_out = torch.linspace(1, 0, overlap_samples)
+    fade_in = torch.linspace(0, 1, overlap_samples)
+    
+    # Apply crossfade
+    a_end = a[-overlap_samples:] * fade_out
+    b_start = b[:overlap_samples] * fade_in
+    
+    # Combine with crossfade
+    result = torch.cat([
+        a[:-overlap_samples],
+        (a_end + b_start),
+        b[overlap_samples:]
+    ])
+    
+    return result
+
 def process_long_text(model, text, voicepack, lang, max_chars=200):
-    """Process longer text by splitting it into manageable chunks"""
+    """Process longer text by splitting it into manageable chunks with context"""
     # Split text at sentence boundaries
     sentences = text.replace('...', '…').replace('。', '.').replace('!', '! ').replace('?', '? ').split('.')
     sentences = [s.strip() + '.' for s in sentences if s.strip()]
@@ -74,12 +98,13 @@ def process_long_text(model, text, voicepack, lang, max_chars=200):
     current_chunk = []
     current_length = 0
     
-    # Group sentences into chunks
+    # Group sentences into chunks with some overlap
     for sentence in sentences:
         if current_length + len(sentence) > max_chars and current_chunk:
             chunks.append(' '.join(current_chunk))
-            current_chunk = [sentence]
-            current_length = len(sentence)
+            # Keep last sentence for context in next chunk
+            current_chunk = [current_chunk[-1], sentence]
+            current_length = sum(len(s) for s in current_chunk)
         else:
             current_chunk.append(sentence)
             current_length += len(sentence)
@@ -94,14 +119,16 @@ def process_long_text(model, text, voicepack, lang, max_chars=200):
     for i, chunk in enumerate(chunks, 1):
         print(f"\nProcessing chunk {i}/{len(chunks)}...")
         audio, phonemes = generate(model, chunk, voicepack, lang=lang)
-        # Convert numpy array to tensor if necessary
         if isinstance(audio, np.ndarray):
             audio = torch.from_numpy(audio)
         all_audio.append(audio)
         all_phonemes.extend(phonemes)
     
-    # Combine all audio chunks and convert back to numpy array
-    final_audio = torch.cat(all_audio)
+    # Combine chunks with crossfading
+    final_audio = all_audio[0]
+    for next_audio in all_audio[1:]:
+        final_audio = crossfade(final_audio, next_audio)
+    
     return final_audio.numpy(), all_phonemes
 
 def main():
