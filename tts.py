@@ -98,13 +98,13 @@ def process_long_text(model, text, voicepack, lang, max_chars=200):
     current_chunk = []
     current_length = 0
     
-    # Group sentences into chunks with some overlap
+    # Group sentences into chunks WITHOUT repeating content
     for sentence in sentences:
         if current_length + len(sentence) > max_chars and current_chunk:
             chunks.append(' '.join(current_chunk))
-            # Keep last sentence for context in next chunk
-            current_chunk = [current_chunk[-1], sentence]
-            current_length = sum(len(s) for s in current_chunk)
+            # Start fresh with new chunk
+            current_chunk = [sentence]
+            current_length = len(sentence)
         else:
             current_chunk.append(sentence)
             current_length += len(sentence)
@@ -118,13 +118,14 @@ def process_long_text(model, text, voicepack, lang, max_chars=200):
     
     for i, chunk in enumerate(chunks, 1):
         print(f"\nProcessing chunk {i}/{len(chunks)}...")
+        print(f"Chunk text: {chunk[:50]}...")  # Debug print to see chunk boundaries
         audio, phonemes = generate(model, chunk, voicepack, lang=lang)
         if isinstance(audio, np.ndarray):
             audio = torch.from_numpy(audio)
         all_audio.append(audio)
         all_phonemes.extend(phonemes)
     
-    # Combine chunks with crossfading
+    # Combine chunks with crossfading but without overlapping content
     final_audio = all_audio[0]
     for next_audio in all_audio[1:]:
         final_audio = crossfade(final_audio, next_audio)
