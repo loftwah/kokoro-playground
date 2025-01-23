@@ -92,6 +92,9 @@ python tts.py --text 'Hello! This is my first time using Kokoro!'
 python tts.py --voice af_bella --text 'Hi! I am Bella with an American accent!'
 python tts.py --voice bm_george --text 'Hello chaps! I am George, with a British accent!'
 
+# Try a long text
+python tts.py --text "In a quaint little town nestled among rolling hills, there lived a peculiar inventor named Dr. Fitzgerald. His workshop was a marvel of organized chaos, filled with whirring contraptions and bubbling beakers. Every morning, he would wake up at precisely 6:43 AM to begin his daily experiments. The townspeople had grown accustomed to the occasional puff of colorful smoke rising from his chimney, or the strange musical notes that sometimes echoed through the valley. One particularly memorable Tuesday, Dr. Fitzgerald announced he had created something extraordinary - a machine that could translate cat meows into human speech! The local cats, however, seemed suspiciously unimpressed. Mrs. Whiskers, the old tabby from the bakery, simply yawned and went back to sleep. Perhaps some mysteries, Dr. Fitzgerald realized, were better left unsolved. But then, as he was about to give up, he noticed something - the cat's ears perked up, and Mrs. Whiskers' tail began to wag. With a mischievous grin, she meowed, 'Meow!' And Dr. Fitzgerald, realizing he had just cracked the code, laughed out loud. The townspeople, hearing the laughter, came running to see what was so funny. And as they gathered around, they too began to laugh, the sound echoing through the valley. For in that moment, Dr. Fitzgerald had not only solved the mystery of cat speech, but he had also discovered the secret to happiness - that sometimes, the most extraordinary things are right under our noses, if only we have the courage to look."
+
 # Save the audio with a specific name (it'll go in the 'output' folder):
 python tts.py --voice af_sky --text 'Hi! I am Sky!' --output my_first_audio.wav
 

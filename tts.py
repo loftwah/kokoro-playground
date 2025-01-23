@@ -4,6 +4,7 @@ import warnings
 import scipy.io.wavfile as wavfile
 from pathlib import Path
 import argparse
+import numpy as np
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -63,6 +64,46 @@ def load_model(device):
     
     raise Exception("Failed to load model using any available method")
 
+def process_long_text(model, text, voicepack, lang, max_chars=200):
+    """Process longer text by splitting it into manageable chunks"""
+    # Split text at sentence boundaries
+    sentences = text.replace('...', '…').replace('。', '.').replace('!', '! ').replace('?', '? ').split('.')
+    sentences = [s.strip() + '.' for s in sentences if s.strip()]
+    
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    # Group sentences into chunks
+    for sentence in sentences:
+        if current_length + len(sentence) > max_chars and current_chunk:
+            chunks.append(' '.join(current_chunk))
+            current_chunk = [sentence]
+            current_length = len(sentence)
+        else:
+            current_chunk.append(sentence)
+            current_length += len(sentence)
+    
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
+    
+    # Process each chunk
+    all_audio = []
+    all_phonemes = []
+    
+    for i, chunk in enumerate(chunks, 1):
+        print(f"\nProcessing chunk {i}/{len(chunks)}...")
+        audio, phonemes = generate(model, chunk, voicepack, lang=lang)
+        # Convert numpy array to tensor if necessary
+        if isinstance(audio, np.ndarray):
+            audio = torch.from_numpy(audio)
+        all_audio.append(audio)
+        all_phonemes.extend(phonemes)
+    
+    # Combine all audio chunks and convert back to numpy array
+    final_audio = torch.cat(all_audio)
+    return final_audio.numpy(), all_phonemes
+
 def main():
     parser = argparse.ArgumentParser(description='Kokoro TTS Generator')
     parser.add_argument('--text', help='Text to synthesize')
@@ -112,7 +153,10 @@ def main():
         
         # Generate audio
         print("\nGenerating audio...")
-        audio, phonemes = generate(model, text, voicepack, lang=args.voice[0])
+        if len(text) > 500:  # Adjust this threshold as needed
+            audio, phonemes = process_long_text(model, text, voicepack, lang=args.voice[0])
+        else:
+            audio, phonemes = generate(model, text, voicepack, lang=args.voice[0])
         
         # Save audio
         output_dir = Path("output")
