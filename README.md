@@ -382,3 +382,33 @@ Join the [Kokoro Discord](https://discord.gg/QuGxSWBfQy) where you can:
 - Stay updated on new features
 
 Remember: There's no such thing as a stupid question. Everyone was a beginner once!
+
+## 🌐 Using the API Server
+
+### Setting Up the API
+
+1. First, install the additional required packages using `uv`:
+```bash
+uv pip install fastapi uvicorn python-dotenv openai pydub
+```
+
+2. Create a `.env` file in your project root:
+```bash
+# Create and edit the .env file
+touch .env
+nano .env  # or use your preferred text editor
+```
+
+3. Add your OpenAI API key to the `.env` file:
+```bash
+OPENAI_API_KEY=your_api_key_here
+```
+
+4. Start the API server using `uv`:
+```bash
+uv run api.py
+```
+
+The server will start at `http://127.0.0.1:8000`
+
+// ... rest of the API documentation remains the same ...
