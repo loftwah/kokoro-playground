@@ -227,7 +227,6 @@ async def list_voices():
         ]
     }
 
-# Add this new endpoint
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_interface():
     """Simple chat interface that speaks responses"""
@@ -235,46 +234,98 @@ async def chat_interface():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Speaking Chat</title>
-        <style>
-            #chat-container { margin: 20px; }
-            #messages { margin: 20px 0; }
-            .message { margin: 10px 0; }
-            .user { color: blue; }
-            .assistant { color: green; }
-        </style>
+        <title>Loftwah's TTS Demo</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </head>
-    <body>
-        <div id="chat-container">
-            <div id="messages"></div>
-            <input type="text" id="userInput" style="width: 80%">
-            <button onclick="sendMessage()">Send</button>
+    <body class="bg-gray-100 min-h-screen">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-3xl font-bold text-center mb-8 text-purple-600">
+                    <i class="fas fa-robot mr-2"></i>Loftwah's TTS Chat Demo
+                </h1>
+                
+                <div id="messages" class="space-y-4 mb-6 h-[400px] overflow-y-auto p-4 border rounded-lg">
+                    <div class="text-center text-gray-500">
+                        Start a conversation! The AI will respond with text and voice.
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" 
+                           id="userInput" 
+                           class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                           placeholder="Type your message here..."
+                           onkeyup="if(event.key === 'Enter') sendMessage()">
+                    <button onclick="sendMessage()" 
+                            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>Send
+                    </button>
+                </div>
+
+                <div class="mt-4 text-center text-sm text-gray-500">
+                    <p>Using OpenAI GPT-3.5 for text generation and custom TTS for voice synthesis</p>
+                </div>
+            </div>
         </div>
 
         <script>
             let audioQueue = [];
             let isPlaying = false;
 
+            function createMessageElement(text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
+                
+                const innerDiv = document.createElement('div');
+                innerDiv.className = `${isUser ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-lg px-4 py-2 max-w-[70%]`;
+                
+                const icon = document.createElement('i');
+                icon.className = `${isUser ? 'fas fa-user' : 'fas fa-robot'} mr-2`;
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = text;
+                
+                innerDiv.appendChild(icon);
+                innerDiv.appendChild(textSpan);
+                messageDiv.appendChild(innerDiv);
+                
+                return messageDiv;
+            }
+
             async function sendMessage() {
                 const input = document.getElementById('userInput');
                 const messages = document.getElementById('messages');
                 
-                // Add user message to display
-                const userText = input.value;
-                messages.innerHTML += `<div class="message user">You: ${userText}</div>`;
+                if (!input.value.trim()) return;
                 
-                // Get LLM response
-                const response = await fetch(`/chat/respond?message=${encodeURIComponent(userText)}`);
-                const data = await response.json();
+                // Add user message
+                messages.appendChild(createMessageElement(input.value, true));
                 
-                // Add assistant message to display
-                messages.innerHTML += `<div class="message assistant">Assistant: ${data.text}</div>`;
+                // Scroll to bottom
+                messages.scrollTop = messages.scrollHeight;
                 
-                // Queue the audio
-                audioQueue.push(data.text);
-                playNextInQueue();
-                
-                input.value = '';
+                try {
+                    // Get LLM response
+                    const response = await fetch(`/chat/respond?message=${encodeURIComponent(input.value)}`);
+                    const data = await response.json();
+                    
+                    // Add assistant message
+                    messages.appendChild(createMessageElement(data.text, false));
+                    
+                    // Queue the audio
+                    audioQueue.push(data.text);
+                    playNextInQueue();
+                    
+                    // Clear input
+                    input.value = '';
+                    
+                    // Scroll to bottom again
+                    messages.scrollTop = messages.scrollHeight;
+                } catch (error) {
+                    console.error('Error:', error);
+                    messages.appendChild(createMessageElement('Sorry, an error occurred.', false));
+                }
             }
 
             async function playNextInQueue() {
