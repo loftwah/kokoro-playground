@@ -172,3 +172,4 @@ cython_debug/
 
 Kokoro-82M/
 output/
+whisper.cpp/
